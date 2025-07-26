@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generatore Preventivi</title>
+    <title>Generatore Preventivi Professionali</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -385,7 +385,7 @@
 <body>
     <div class="container">
         <div class="form-section">
-            <h1>Crea il tuo Preventivo</h1>
+            <h1>Genera Preventivi Professionali</h1>
             
             <div class="form-group">
                 <label>Nome Azienda/Professionista</label>
@@ -435,12 +435,17 @@
             <div class="row">
                 <div class="form-group">
                     <label>Numero Preventivo</label>
-                    <input type="text" id="numeroPreventivo" placeholder="001/2024" value="001/2024">
+                    <input type="text" id="numeroPreventivo" placeholder="PREV-001/2024" value="PREV-001/2024">
                 </div>
                 <div class="form-group">
                     <label>Data</label>
                     <input type="date" id="data" value="">
                 </div>
+            </div>
+
+            <div class="form-group">
+                <label>Validità preventivo (giorni)</label>
+                <input type="number" id="validita" placeholder="30" value="30" min="1">
             </div>
             
             <div class="items-section">
@@ -459,7 +464,7 @@
             
             <div class="form-group" style="margin-top: 30px;">
                 <label>Note aggiuntive</label>
-                <textarea id="note" rows="4" placeholder="Condizioni di pagamento, validità preventivo, etc.">Il preventivo è valido 30 giorni. Pagamento entro 30 giorni dalla fatturazione.</textarea>
+                <textarea id="note" rows="4" placeholder="Condizioni di pagamento, validità preventivo, etc.">Il preventivo è valido 30 giorni. Pagamento entro 30 giorni dall'accettazione.</textarea>
             </div>
 
             <div class="form-group">
@@ -511,12 +516,16 @@
             const cliente = document.getElementById('cliente').value || 'Nome Cliente';
             const indirizzoCliente = document.getElementById('indirizzoCliente').value || 'Indirizzo Cliente';
             const cittaCliente = document.getElementById('cittaCliente').value || 'Città Cliente';
-            const numeroPreventivo = document.getElementById('numeroPreventivo').value || '001/2024';
+            const numeroPreventivo = document.getElementById('numeroPreventivo').value || 'PREV-001/2024';
             const data = document.getElementById('data').value || new Date().toISOString().split('T')[0];
+            const validita = document.getElementById('validita').value || 30;
             const note = document.getElementById('note').value || '';
             
-            // Formatta la data
+            // Formatta le date
             const dataFormatted = new Date(data).toLocaleDateString('it-IT');
+            const dataScadenza = new Date(data);
+            dataScadenza.setDate(dataScadenza.getDate() + parseInt(validita));
+            const scadenzaFormatted = dataScadenza.toLocaleDateString('it-IT');
             
             // Calcola totali
             const items = Array.from(document.querySelectorAll('.item-row')).map(row => {
@@ -537,6 +546,7 @@
                 <div class="preventivo-header">
                     <h1>PREVENTIVO</h1>
                     <p style="color: #666; font-size: 1.1em;">N° ${numeroPreventivo} del ${dataFormatted}</p>
+                    <p style="color: #888; font-size: 0.95em; margin-top: 5px;"><strong>Valido fino al ${scadenzaFormatted}</strong></p>
                 </div>
                 
                 <div class="preventivo-info">
@@ -659,13 +669,17 @@
             pdf.text("PREVENTIVO", 105, 30, { align: "center" });
             
             // Numero e data
-            const numeroPreventivo = document.getElementById('numeroPreventivo').value || '001/2024';
+            const numeroPreventivo = document.getElementById('numeroPreventivo').value || 'PREV-001/2024';
             const data = document.getElementById('data').value || new Date().toISOString().split('T')[0];
+            const validita = document.getElementById('validita').value || 30;
             const dataFormatted = new Date(data).toLocaleDateString('it-IT');
+            const dataScadenza = new Date(data);
+            dataScadenza.setDate(dataScadenza.getDate() + parseInt(validita));
             
             pdf.setFontSize(12);
             pdf.setTextColor(100, 100, 100);
             pdf.text(`N° ${numeroPreventivo} del ${dataFormatted}`, 105, 40, { align: "center" });
+            pdf.text(`Valido fino al ${dataScadenza.toLocaleDateString('it-IT')}`, 105, 48, { align: "center" });
             
             // Dati azienda
             const nomeAzienda = document.getElementById('nomeAzienda').value || 'La tua azienda';
