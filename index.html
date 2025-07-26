@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generatore Preventivi</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 600px;
+            gap: 30px;
+            height: calc(100vh - 40px);
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow-y: auto;
+        }
+
+        .preview-section {
+            background: white;
+            border-radius: 20px;
+            padding: 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #4a5568;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .items-section {
+            margin-top: 30px;
+        }
+
+        .item-row {
+            display: grid;
+            grid-template-columns: 2fr 80px 120px 120px 40px;
+            gap: 10px;
+            align-items: end;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+
+        .preview-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+        }
+
+        .preview-actions {
+            padding: 20px;
+            background: #f7fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 15px;
+        }
+
+        .preventivo {
+            background: white;
+            max-width: 100%;
+            margin: 0 auto;
+            line-height: 1.6;
+            color: #2d3748;
+        }
+
+        .preventivo-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .preventivo-header h1 {
+            color: #2d3748;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .preventivo-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .info-block h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .items-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .items-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .items-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .items-table tr:nth-child(even) {
+            background: #f7fafc;
+        }
+
+        .totale-section {
+            text-align: right;
+            margin-top: 30px;
+        }
+
+        .totale-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .totale-finale {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            padding: 15px 0;
+        }
+
+        .note-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f7fafc;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .preview-section {
+                min-height: 600px;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            
+            .container {
+                display: block;
+            }
+            
+            .form-section {
+                display: none;
+            }
+            
+            .preview-section {
+                box-shadow: none;
+                border-radius: 0;
+            }
+            
+            .preview-actions {
+                display: none;
+            }
+        }
+
+        .remove-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .donate-floating {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            border-radius: 50px;
+            padding: 15px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(0, 112, 186, 0.1);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .paypal-btn {
+            background: linear-gradient(135deg, #0070ba, #005ea6);
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(0, 112, 186, 0.3);
+        }
+
+        .paypal-btn:hover {
+            background: linear-gradient(135deg, #005ea6, #004a8f);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 112, 186, 0.4);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-section">
+            <h1>Crea il tuo Preventivo</h1>
+            
+            <div class="form-group">
+                <label>Nome Azienda/Professionista</label>
+                <input type="text" id="nomeAzienda" placeholder="La tua azienda" value="Studio Professionale">
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Indirizzo</label>
+                    <input type="text" id="indirizzo" placeholder="Via, Numero" value="Via Roma 123">
+                </div>
+                <div class="form-group">
+                    <label>Città, CAP</label>
+                    <input type="text" id="citta" placeholder="Città, CAP" value="Milano, 20100">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Telefono</label>
+                    <input type="text" id="telefono" placeholder="+39 123 456 7890" value="+39 02 1234567">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="info@azienda.it" value="info@studio.it">
+                </div>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 2px solid #e2e8f0;">
+            
+            <div class="form-group">
+                <label>Cliente</label>
+                <input type="text" id="cliente" placeholder="Nome del cliente" value="Azienda Cliente S.r.l.">
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Indirizzo Cliente</label>
+                    <input type="text" id="indirizzoCliente" placeholder="Indirizzo" value="Corso Italia 456">
+                </div>
+                <div class="form-group">
+                    <label>Città Cliente</label>
+                    <input type="text" id="cittaCliente" placeholder="Città, CAP" value="Roma, 00100">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="form-group">
+                    <label>Numero Preventivo</label>
+                    <input type="text" id="numeroPreventivo" placeholder="001/2024" value="001/2024">
+                </div>
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="data" value="">
+                </div>
+            </div>
+            
+            <div class="items-section">
+                <label>Articoli/Servizi</label>
+                <div id="itemsContainer">
+                    <div class="item-row">
+                        <input type="text" placeholder="Descrizione" value="Consulenza strategica" class="item-desc">
+                        <input type="number" placeholder="Qtà" value="10" min="1" class="item-qty">
+                        <input type="number" placeholder="Prezzo €" value="100" min="0" step="0.01" class="item-price">
+                        <input type="text" readonly class="item-total" value="€1,000.00">
+                        <button type="button" class="btn btn-danger btn-small remove-btn" onclick="removeItem(this)">×</button>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-small" onclick="addItem()">+ Aggiungi Articolo</button>
+            </div>
+            
+            <div class="form-group" style="margin-top: 30px;">
+                <label>Note aggiuntive</label>
+                <textarea id="note" rows="4" placeholder="Condizioni di pagamento, validità preventivo, etc.">Il preventivo è valido 30 giorni. Pagamento entro 30 giorni dalla fatturazione.</textarea>
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="includiIva" checked>
+                    <label for="includiIva">Includi IVA (22%)</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-section">
+            <div class="preview-content">
+                <div class="preventivo" id="preventivo">
+                    <!-- Il preventivo viene generato qui -->
+                </div>
+            </div>
+            <div class="preview-actions">
+                <button class="btn btn-primary" onclick="downloadPDF()">📄 Scarica PDF</button>
+                <button class="btn btn-secondary" onclick="printPreventivo()">🖨️ Stampa</button>
+                <button class="btn btn-secondary" onclick="copyToClipboard()">📋 Copia</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottone PayPal flottante -->
+    <div class="donate-floating">
+        <a href="https://www.paypal.com/donate?business=santivadala.dev%40gmail.com&no_recurring=0&currency_code=EUR" target="_blank" class="paypal-btn">
+            ❤️ Supporta il progetto
+        </a>
+    </div>
+
+    <script>
+        // Imposta la data odierna
+        document.getElementById('data').value = new Date().toISOString().split('T')[0];
+        
+        function updatePreventivo() {
+            const preventivo = document.getElementById('preventivo');
+            const nomeAzienda = document.getElementById('nomeAzienda').value || 'La tua azienda';
+            const indirizzo = document.getElementById('indirizzo').value || 'Indirizzo';
+            const citta = document.getElementById('citta').value || 'Città';
+            const telefono = document.getElementById('telefono').value || 'Telefono';
+            const email = document.getElementById('email').value || 'Email';
+            const cliente = document.getElementById('cliente').value || 'Nome Cliente';
+            const indirizzoCliente = document.getElementById('indirizzoCliente').value || 'Indirizzo Cliente';
+            const cittaCliente = document.getElementById('cittaCliente').value || 'Città Cliente';
+            const numeroPreventivo = document.getElementById('numeroPreventivo').value || '001/2024';
+            const data = document.getElementById('data').value || new Date().toISOString().split('T')[0];
+            const note = document.getElementById('note').value || '';
+            
+            // Formatta la data
+            const dataFormatted = new Date(data).toLocaleDateString('it-IT');
+            
+            // Calcola totali
+            const items = Array.from(document.querySelectorAll('.item-row')).map(row => {
+                const desc = row.querySelector('.item-desc').value || 'Servizio';
+                const qty = parseInt(row.querySelector('.item-qty').value) || 1;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = qty * price;
+                return { desc, qty, price, total };
+            });
+            
+            const subtotale = items.reduce((sum, item) => sum + item.total, 0);
+            const includiIva = document.getElementById('includiIva').checked;
+            const iva = includiIva ? subtotale * 0.22 : 0;
+            const totale = subtotale + iva;
+            
+            // Genera HTML del preventivo
+            preventivo.innerHTML = `
+                <div class="preventivo-header">
+                    <h1>PREVENTIVO</h1>
+                    <p style="color: #666; font-size: 1.1em;">N° ${numeroPreventivo} del ${dataFormatted}</p>
+                </div>
+                
+                <div class="preventivo-info">
+                    <div class="info-block">
+                        <h3>Da:</h3>
+                        <p><strong>${nomeAzienda}</strong></p>
+                        <p>${indirizzo}</p>
+                        <p>${citta}</p>
+                        <p>Tel: ${telefono}</p>
+                        <p>Email: ${email}</p>
+                    </div>
+                    
+                    <div class="info-block">
+                        <h3>A:</h3>
+                        <p><strong>${cliente}</strong></p>
+                        <p>${indirizzoCliente}</p>
+                        <p>${cittaCliente}</p>
+                    </div>
+                </div>
+                
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Descrizione</th>
+                            <th>Qtà</th>
+                            <th>Prezzo Unit.</th>
+                            <th>Totale</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${items.map(item => `
+                            <tr>
+                                <td>${item.desc}</td>
+                                <td>${item.qty}</td>
+                                <td>€${item.price.toFixed(2)}</td>
+                                <td>€${item.total.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+                
+                <div class="totale-section">
+                    <div class="totale-row">
+                        <span>Subtotale:</span>
+                        <span>€${subtotale.toFixed(2)}</span>
+                    </div>
+                    ${includiIva ? `
+                    <div class="totale-row">
+                        <span>IVA (22%):</span>
+                        <span>€${iva.toFixed(2)}</span>
+                    </div>
+                    ` : ''}
+                    <div class="totale-finale">
+                        <span>TOTALE:</span>
+                        <span>€${totale.toFixed(2)}</span>
+                    </div>
+                </div>
+                
+                ${note ? `
+                    <div class="note-section">
+                        <h3 style="margin-bottom: 10px; color: #4a5568;">Note:</h3>
+                        <p style="white-space: pre-line;">${note}</p>
+                    </div>
+                ` : ''}
+            `;
+            
+            // Aggiorna i totali negli input
+            items.forEach((item, index) => {
+                const rows = document.querySelectorAll('.item-row');
+                if (rows[index]) {
+                    rows[index].querySelector('.item-total').value = `€${item.total.toLocaleString('it-IT', {minimumFractionDigits: 2})}`;
+                }
+            });
+        }
+        
+        function addItem() {
+            const container = document.getElementById('itemsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'item-row';
+            newRow.innerHTML = `
+                <input type="text" placeholder="Descrizione" class="item-desc">
+                <input type="number" placeholder="Qtà" value="1" min="1" class="item-qty">
+                <input type="number" placeholder="Prezzo €" value="0" min="0" step="0.01" class="item-price">
+                <input type="text" readonly class="item-total" value="€0.00">
+                <button type="button" class="btn btn-danger btn-small remove-btn" onclick="removeItem(this)">×</button>
+            `;
+            container.appendChild(newRow);
+            
+            // Aggiungi event listeners
+            addItemEventListeners(newRow);
+            updatePreventivo();
+        }
+        
+        function removeItem(btn) {
+            btn.closest('.item-row').remove();
+            updatePreventivo();
+        }
+        
+        function addItemEventListeners(row) {
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('input', updatePreventivo);
+            });
+        }
+        
+        function printPreventivo() {
+            window.print();
+        }
+        
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            // Configurazione font e colori
+            pdf.setFont("helvetica");
+            
+            // Header
+            pdf.setFontSize(24);
+            pdf.setTextColor(102, 126, 234);
+            pdf.text("PREVENTIVO", 105, 30, { align: "center" });
+            
+            // Numero e data
+            const numeroPreventivo = document.getElementById('numeroPreventivo').value || '001/2024';
+            const data = document.getElementById('data').value || new Date().toISOString().split('T')[0];
+            const dataFormatted = new Date(data).toLocaleDateString('it-IT');
+            
+            pdf.setFontSize(12);
+            pdf.setTextColor(100, 100, 100);
+            pdf.text(`N° ${numeroPreventivo} del ${dataFormatted}`, 105, 40, { align: "center" });
+            
+            // Dati azienda
+            const nomeAzienda = document.getElementById('nomeAzienda').value || 'La tua azienda';
+            const indirizzo = document.getElementById('indirizzo').value || 'Indirizzo';
+            const citta = document.getElementById('citta').value || 'Città';
+            const telefono = document.getElementById('telefono').value || 'Telefono';
+            const email = document.getElementById('email').value || 'Email';
+            
+            pdf.setFontSize(10);
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont("helvetica", "bold");
+            pdf.text("Da:", 20, 60);
+            pdf.setFont("helvetica", "normal");
+            pdf.text(nomeAzienda, 20, 70);
+            pdf.text(indirizzo, 20, 78);
+            pdf.text(citta, 20, 86);
+            pdf.text(`Tel: ${telefono}`, 20, 94);
+            pdf.text(`Email: ${email}`, 20, 102);
+            
+            // Dati cliente
+            const cliente = document.getElementById('cliente').value || 'Nome Cliente';
+            const indirizzoCliente = document.getElementById('indirizzoCliente').value || 'Indirizzo Cliente';
+            const cittaCliente = document.getElementById('cittaCliente').value || 'Città Cliente';
+            
+            pdf.setFont("helvetica", "bold");
+            pdf.text("A:", 120, 60);
+            pdf.setFont("helvetica", "normal");
+            pdf.text(cliente, 120, 70);
+            pdf.text(indirizzoCliente, 120, 78);
+            pdf.text(cittaCliente, 120, 86);
+            
+            // Tabella articoli
+            const items = Array.from(document.querySelectorAll('.item-row')).map(row => {
+                const desc = row.querySelector('.item-desc').value || 'Servizio';
+                const qty = parseInt(row.querySelector('.item-qty').value) || 1;
+                const price = parseFloat(row.querySelector('.item-price').value) || 0;
+                const total = qty * price;
+                return { desc, qty, price, total };
+            });
+            
+            let yPos = 120;
+            
+            // Header tabella
+            pdf.setFillColor(102, 126, 234);
+            pdf.rect(20, yPos, 170, 8, 'F');
+            pdf.setTextColor(255, 255, 255);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(9);
+            pdf.text("Descrizione", 22, yPos + 5);
+            pdf.text("Qtà", 130, yPos + 5);
+            pdf.text("Prezzo", 145, yPos + 5);
+            pdf.text("Totale", 170, yPos + 5);
+            
+            yPos += 10;
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont("helvetica", "normal");
+            
+            // Righe tabella
+            items.forEach((item, index) => {
+                if (index % 2 === 0) {
+                    pdf.setFillColor(247, 250, 252);
+                    pdf.rect(20, yPos - 2, 170, 8, 'F');
+                }
+                
+                // Tronca descrizione se troppo lunga
+                let desc = item.desc;
+                if (desc.length > 45) {
+                    desc = desc.substring(0, 42) + "...";
+                }
+                
+                pdf.text(desc, 22, yPos + 3);
+                pdf.text(item.qty.toString(), 132, yPos + 3);
+                pdf.text(`€${item.price.toFixed(2)}`, 147, yPos + 3);
+                pdf.text(`€${item.total.toFixed(2)}`, 172, yPos + 3);
+                yPos += 8;
+            });
+            
+            // Totali
+            const subtotale = items.reduce((sum, item) => sum + item.total, 0);
+            const includiIva = document.getElementById('includiIva').checked;
+            const iva = includiIva ? subtotale * 0.22 : 0;
+            const totale = subtotale + iva;
+            
+            yPos += 10;
+            pdf.line(130, yPos, 190, yPos);
+            yPos += 8;
+            
+            pdf.text("Subtotale:", 140, yPos);
+            pdf.text(`€${subtotale.toFixed(2)}`, 172, yPos);
+            yPos += 8;
+            
+            if (includiIva) {
+                pdf.text("IVA (22%):", 140, yPos);
+                pdf.text(`€${iva.toFixed(2)}`, 172, yPos);
+                yPos += 8;
+            }
+            
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(11);
+            pdf.text("TOTALE:", 140, yPos);
+            pdf.text(`€${totale.toFixed(2)}`, 172, yPos);
+            
+            // Note
+            const note = document.getElementById('note').value;
+            if (note) {
+                yPos += 20;
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(10);
+                pdf.text("Note:", 20, yPos);
+                yPos += 8;
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(9);
+                
+                // Dividi le note in righe
+                const noteLines = pdf.splitTextToSize(note, 170);
+                noteLines.forEach(line => {
+                    pdf.text(line, 20, yPos);
+                    yPos += 5;
+                });
+            }
+            
+            // Salva il PDF
+            const fileName = `Preventivo_${numeroPreventivo.replace('/', '-')}_${cliente.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+            pdf.save(fileName);
+        }
+        
+        function copyToClipboard() {
+            const preventivo = document.getElementById('preventivo');
+            const text = preventivo.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Preventivo copiato negli appunti!');
+            });
+        }
+        
+        // Event listeners iniziali
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('input', updatePreventivo);
+            });
+            
+            // Aggiungi listeners agli items esistenti
+            document.querySelectorAll('.item-row').forEach(row => {
+                addItemEventListeners(row);
+            });
+            
+            // Aggiorna preventivo iniziale
+            updatePreventivo();
+        });
+    </script>
+</body>
+</html>
